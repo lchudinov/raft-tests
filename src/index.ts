@@ -1,7 +1,35 @@
-import { runZluxAppServer, ZluxLaunchParams } from "./zlux-utils";
+import { runZluxAppServer, ZluxLaunchParams, ZluxInstance, findLeaders, sleep } from "./zlux-utils";
+import path from "path";
 
-console.log('it works');
-const params: ZluxLaunchParams = {
-  instanceDir: `D:\rocket\zlux-instances\instance-1`,
-};
-runZluxAppServer(params);
+async function run() {
+  console.log('it works');
+  const instancesDir = 'c:\\users\\lchudinov\\work\\zlux\\zlux-instances';
+  const instances: ZluxInstance[] = [];
+  for (let i = 0; i < 3; i++) {
+    const num = i + 1;
+    const params: ZluxLaunchParams = {
+      index: num,
+      instanceDir: path.join(instancesDir, `instance${num}`),
+    };
+    console.log(params.instanceDir);
+    const instance = runZluxAppServer(params);
+    instances.push(instance);
+  }
+
+  const n = 10000;
+  console.log(`sleep ${n / 1000} seconds`);
+  await sleep(n);
+  const leaders = findLeaders(instances);
+  console.log(`there are ${leaders.length} leaders`);
+  
+  await sleep(n*10);
+  for (const instance of instances) {
+    try {
+      console.log(`about to kill process pid = ${instance.process.pid}`);
+      instance.process.kill();
+    } catch (e) {
+      console.log(`error ${e.message}`);
+    }
+  }
+}
+run();

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "ts-node src/index.ts",
-    "test": "ts-mocha src/**/*.spec.ts"
+    "test": "ts-mocha src/**/*.spec.ts --timeout 350000"
   },
   "keywords": [],
   "author": "",
