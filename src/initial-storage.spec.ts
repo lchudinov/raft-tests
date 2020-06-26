@@ -76,6 +76,23 @@ describe('Leader Election', () => {
     leader = leaderFound!;
   });
 
+  it('should get main page again', async function () {
+    this.timeout(20000);
+    const res = await req.get('/ui/v1/zlux/ZLUX/plugins/org.zowe.zlux.bootstrap/web/')
+    .set('Cookie', cookie)
+    .send();
+    expect(res.status, JSON.stringify(res.body)).to.equal(200);
+  });
+
+  it('should get correct value from cluster storage again', async () => {
+    const res = await req
+      .get(`/ui/v1/zlux/ZLUX/plugins/org.zowe.zlux.sample.angular/services/hello/_current/${key}`)
+      .set('Cookie', cookie)
+      .send();
+    expect(res.status).to.equal(200);
+    expect(res.body.value, JSON.stringify(res.body)).to.equal(value);
+  });
+
   it('should stop all instances', () => {
     stopZluxAppServers(instances);
   });
