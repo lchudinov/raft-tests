@@ -1,17 +1,17 @@
 import request from 'supertest';
 import { expect } from 'chai';
-import { createInstances, ZluxInstance, sleep, findLeaders, stopZluxAppServers } from './zlux-utils';
+import { createInstances, ZluxInstance, sleep, findLeader, stopZluxAppServers, stopZluxAppServer } from './zlux-utils';
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-
-describe('Initial Storage', () => {
+describe('Leader Election', () => {
   const req = request('https://localhost:10010');
   let cookie: string[];
   const key = '123';
   const value = '456';
   let instances: ZluxInstance[];
   let leader: ZluxInstance;
+  let previousLeader: ZluxInstance;
 
   it('should start all instances', async function () {
     const n = 40;
@@ -22,9 +22,9 @@ describe('Initial Storage', () => {
   });
 
   it('should find a leader', async () => {
-    const leaders = findLeaders(instances);
-    expect(leaders.length, 'should be a single leader elected').to.equal(1);
-    leader = leaders[0];
+    const leaderFound = findLeader(instances);
+    expect(leaderFound, 'leader must be elected').to.be.instanceOf(Object);
+    leader = leaderFound!;
   });
 
   it('should get main page', async function () {
@@ -58,6 +58,22 @@ describe('Initial Storage', () => {
       .send();
     expect(res.status).to.equal(200);
     expect(res.body.value, JSON.stringify(res.body)).to.equal(value);
+  });
+
+  it('should stop leader', async function() {
+    this.timeout(25000);
+    if (leader) {
+      previousLeader = leader;
+      stopZluxAppServer(leader);
+    }
+    await sleep(20*1000);
+  });
+
+  it('should find a new leader', async () => {
+    const leaderFound = findLeader(instances);
+    expect(leaderFound, 'new leader must be elected').to.be.instanceOf(Object);
+    expect(leaderFound?.leaderOfTerm).greaterThan(previousLeader?.leaderOfTerm!);
+    leader = leaderFound!;
   });
 
   it('should stop all instances', () => {

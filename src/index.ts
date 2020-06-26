@@ -1,4 +1,4 @@
-import { runZluxAppServer, ZluxLaunchParams, ZluxInstance, findLeaders, sleep } from "./zlux-utils";
+import { runZluxAppServer, ZluxLaunchParams, ZluxInstance, findLeader, sleep } from "./zlux-utils";
 import path from "path";
 
 async function run() {
@@ -19,8 +19,8 @@ async function run() {
   const n = 10000;
   console.log(`sleep ${n / 1000} seconds`);
   await sleep(n);
-  const leaders = findLeaders(instances);
-  console.log(`there are ${leaders.length} leaders`);
+  const leader = findLeader(instances);
+  console.log(`there is ${leader ? 'leader' : 'no leader'}`);
   
   await sleep(n*10);
   for (const instance of instances) {

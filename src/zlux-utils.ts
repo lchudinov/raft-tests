@@ -70,25 +70,25 @@ export function runZluxAppServer(params: ZluxLaunchParams): ZluxInstance {
   return instance;
 }
 
-export function killZluxAppServer(instance: ZluxInstance): void {
+export function stopZluxAppServer(instance: ZluxInstance): void {
   instance.process.kill();
   instance.killed = true;
 }
 
-export function findLeaders(instances: ZluxInstance[]): ZluxInstance[] {
-  let leaders: ZluxInstance[] = [];
+export function findLeader(instances: ZluxInstance[]): ZluxInstance | undefined {
+  let leader: ZluxInstance | undefined;
   let lastTerm: number = -1;
   for (const instance of instances) {
     if (instance.leaderOfTerm) {
       if (instance.leaderOfTerm > lastTerm) {
         lastTerm = instance.leaderOfTerm;
-        leaders = [instance];
+        leader = instance;
       } else if (instance.leaderOfTerm === lastTerm) {
-        leaders.push(instance);
+        throw new Error(`more than one leader of term ${lastTerm}`);
       }
     }
   }
-  return leaders;
+  return leader;
 }
 
 export async function sleep(ms: number) {
@@ -113,7 +113,7 @@ export function createInstances(): ZluxInstance[] {
 export function stopZluxAppServers(instances: ZluxInstance[]): void {
   instances.forEach(instance => {
     if (!instance.killed) {
-      killZluxAppServer(instance);
+      stopZluxAppServer(instance);
     }
   });
 }
