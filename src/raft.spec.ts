@@ -4,7 +4,8 @@ import { createInstances, ZluxInstance, sleep, findLeader, stopZluxAppServers, s
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-describe('Leader Election', () => {
+describe('Leader Election', function () {
+  this.timeout(0);
   const req = request('https://localhost:10010');
   let cookie: string[];
   const key = '123';
@@ -15,7 +16,6 @@ describe('Leader Election', () => {
 
   it('should start all instances', async function () {
     const n = 40;
-    this.timeout((n + 5) * 1000);
     instances = createInstances();
     console.log(`waiting ${n} seconds`);
     await sleep(n * 1000);
@@ -28,7 +28,6 @@ describe('Leader Election', () => {
   });
 
   it('should get main page', async function () {
-    this.timeout(10000);
     const res = await req.get('/ui/v1/zlux/ZLUX/plugins/org.zowe.zlux.bootstrap/web/').send();
     expect(res.status, JSON.stringify(res.body)).to.equal(200);
   });
@@ -61,7 +60,6 @@ describe('Leader Election', () => {
   });
 
   it('should stop leader', async function() {
-    this.timeout(25000);
     if (leader) {
       previousLeader = leader;
       stopZluxAppServer(leader);
@@ -77,7 +75,6 @@ describe('Leader Election', () => {
   });
 
   it('should get main page again', async function () {
-    this.timeout(20000);
     const res = await req.get('/ui/v1/zlux/ZLUX/plugins/org.zowe.zlux.bootstrap/web/')
     .set('Cookie', cookie)
     .send();
