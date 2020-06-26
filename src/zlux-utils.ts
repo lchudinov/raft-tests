@@ -11,6 +11,7 @@ export interface ZluxInstance {
   process: child_process.ChildProcess,
   launchParams: ZluxLaunchParams,
   leaderOfTerm?: number;
+  killed?: boolean;
 }
 
 export function runZluxAppServer(params: ZluxLaunchParams): ZluxInstance {
@@ -36,17 +37,17 @@ export function runZluxAppServer(params: ZluxLaunchParams): ZluxInstance {
     ZLUX_NODE_LOG_FILE: logFile,
     NODE_PATH: nodePath,
   };
-  console.log(`start using env:\n${JSON.stringify(env, null, 2)}`);
+  //console.log(`start using env:\n${JSON.stringify(env, null, 2)}`);
   const options: child_process.SpawnOptions = {
     cwd: workDir,
     env,
     detached: true,
   };
   let log = fs.createWriteStream(logFile);
-  console.log(`options are ${JSON.stringify(options, null, 2)}`);
-  const args = ['--harmony', 'zluxCluster.js', `--config="${configFile}"`];
-  console.log(`args ${args.join(' ')}`);
-  const child = child_process.spawn('node.exe', ['--harmony', 'zluxCluster.js', `--config=${configFile}`], options);
+  //console.log(`options are ${JSON.stringify(options, null, 2)}`);
+  const args = ['--harmony', 'zluxCluster.js', `--config=${configFile}`];
+  //console.log(`args ${args.join(' ')}`);
+  const child = child_process.spawn('node.exe', args, options);
   const instance: ZluxInstance = {
     process: child,
     launchParams: params,
@@ -67,6 +68,11 @@ export function runZluxAppServer(params: ZluxLaunchParams): ZluxInstance {
   });
   child.on('exit', () => log.close());
   return instance;
+}
+
+export function killZluxAppServer(instance: ZluxInstance): void {
+  instance.process.kill();
+  instance.killed = true;
 }
 
 export function findLeaders(instances: ZluxInstance[]): ZluxInstance[] {
@@ -90,7 +96,6 @@ export async function sleep(ms: number) {
 }
 
 export function createInstances(): ZluxInstance[] {
-  console.log('it works');
   const instancesDir = 'c:\\users\\lchudinov\\work\\zlux\\zlux-instances';
   const instances: ZluxInstance[] = [];
   for (let i = 0; i < 3; i++) {
@@ -99,9 +104,16 @@ export function createInstances(): ZluxInstance[] {
       index: num,
       instanceDir: path.join(instancesDir, `instance${num}`),
     };
-    console.log(params.instanceDir);
     const instance = runZluxAppServer(params);
     instances.push(instance);
   }
   return instances;
+}
+
+export function stopZluxAppServers(instances: ZluxInstance[]): void {
+  instances.forEach(instance => {
+    if (!instance.killed) {
+      killZluxAppServer(instance);
+    }
+  });
 }
