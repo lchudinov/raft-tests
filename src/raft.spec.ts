@@ -4,6 +4,8 @@ import { createInstances, ZluxInstance, runZluxAppServer, findLeader, stopZluxAp
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
+const SWITCH_OVER_COUNT = 3;
+
 describe('Leader Election', function () {
   this.timeout(0);
   this.bail(true);
@@ -58,42 +60,44 @@ describe('Leader Election', function () {
     expect(res.body.value, JSON.stringify(res.body)).to.equal(value);
   });
 
-  it('should stop leader', async function() {
-    if (leader) {
-      previousLeader = leader;
-      stopZluxAppServer(leader);
-    }
-    await waitForRecovery();
-  });
+  for (let i = 0; i < SWITCH_OVER_COUNT; i++) {
+    it('should stop leader', async function () {
+      if (leader) {
+        previousLeader = leader;
+        stopZluxAppServer(leader);
+      }
+      await waitForRecovery();
+    });
 
-  it('should find a new leader', async () => {
-    const leaderFound = findLeader(instances);
-    expect(leaderFound, 'new leader must be elected').to.be.instanceOf(Object);
-    expect(leaderFound?.leaderOfTerm).greaterThan(previousLeader?.leaderOfTerm!);
-    leader = leaderFound!;
-  });
+    it('should find a new leader', async () => {
+      const leaderFound = findLeader(instances);
+      expect(leaderFound, 'new leader must be elected').to.be.instanceOf(Object);
+      expect(leaderFound?.leaderOfTerm).greaterThan(previousLeader?.leaderOfTerm!);
+      leader = leaderFound!;
+    });
 
-  it('should get main page again', async function () {
-    const res = await req.get('/ui/v1/zlux/ZLUX/plugins/org.zowe.zlux.bootstrap/web/')
-    .set('Cookie', cookie)
-    .send();
-    expect(res.status, JSON.stringify(res.body)).to.equal(200);
-  });
+    it('should get main page again', async function () {
+      const res = await req.get('/ui/v1/zlux/ZLUX/plugins/org.zowe.zlux.bootstrap/web/')
+        .set('Cookie', cookie)
+        .send();
+      expect(res.status, JSON.stringify(res.body)).to.equal(200);
+    });
 
-  it('should get correct value from cluster storage again', async () => {
-    const res = await req
-      .get(`/ui/v1/zlux/ZLUX/plugins/org.zowe.zlux.sample.angular/services/hello/_current/${key}`)
-      .set('Cookie', cookie)
-      .send();
-    expect(res.status).to.equal(200);
-    expect(res.body.value, JSON.stringify(res.body)).to.equal(value);
-  });
+    it('should get correct value from cluster storage again', async () => {
+      const res = await req
+        .get(`/ui/v1/zlux/ZLUX/plugins/org.zowe.zlux.sample.angular/services/hello/_current/${key}`)
+        .set('Cookie', cookie)
+        .send();
+      expect(res.status).to.equal(200);
+      expect(res.body.value, JSON.stringify(res.body)).to.equal(value);
+    });
 
-  it('should re-start previous leader', async function() {
-    const params = previousLeader.launchParams;
-    const newInstance = runZluxAppServer(params);
-    instances[instances.indexOf(previousLeader)] = newInstance;
-  });
+    it('should re-start previous leader', async function () {
+      const params = previousLeader.launchParams;
+      const newInstance = runZluxAppServer(params);
+      instances[instances.indexOf(previousLeader)] = newInstance;
+    });
+  }
 
   after('should stop all instances', () => {
     stopZluxAppServers(instances);
