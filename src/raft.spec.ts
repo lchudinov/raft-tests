@@ -1,11 +1,12 @@
 import request from 'supertest';
 import { expect } from 'chai';
-import { createInstances, ZluxInstance, sleep, findLeader, stopZluxAppServers, stopZluxAppServer } from './zlux-utils';
+import { createInstances, ZluxInstance, runZluxAppServer, findLeader, stopZluxAppServers, stopZluxAppServer, waitForRecovery, waitForStartup } from './zlux-utils';
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 describe('Leader Election', function () {
   this.timeout(0);
+  this.bail(true);
   const req = request('https://localhost:10010');
   let cookie: string[];
   const key = '123';
@@ -14,11 +15,9 @@ describe('Leader Election', function () {
   let leader: ZluxInstance;
   let previousLeader: ZluxInstance;
 
-  it('should start all instances', async function () {
-    const n = 40;
+  before('should start all instances', async function () {
     instances = createInstances();
-    console.log(`waiting ${n} seconds`);
-    await sleep(n * 1000);
+    await waitForStartup();
   });
 
   it('should find a leader', async () => {
@@ -64,7 +63,7 @@ describe('Leader Election', function () {
       previousLeader = leader;
       stopZluxAppServer(leader);
     }
-    await sleep(20*1000);
+    await waitForRecovery();
   });
 
   it('should find a new leader', async () => {
@@ -90,7 +89,13 @@ describe('Leader Election', function () {
     expect(res.body.value, JSON.stringify(res.body)).to.equal(value);
   });
 
-  it('should stop all instances', () => {
+  it('should re-start previous leader', async function() {
+    const params = previousLeader.launchParams;
+    const newInstance = runZluxAppServer(params);
+    instances[instances.indexOf(previousLeader)] = newInstance;
+  });
+
+  after('should stop all instances', () => {
     stopZluxAppServers(instances);
   });
 

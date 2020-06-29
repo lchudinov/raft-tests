@@ -30,8 +30,8 @@ export function runZluxAppServer(params: ZluxLaunchParams): ZluxInstance {
     ZOWE_SESSION_SECRET: 'my-secret',
     ZLUX_RAFT_CLUSTER_ENABLED: 'TRUE',
     INSTANCE_DIR: params.instanceDir,
-    ZLUX_MIN_WORKERS: '2',
-    ZLUX_MAX_WORKERS: '2',
+    ZLUX_MIN_WORKERS: '1',
+    ZLUX_MAX_WORKERS: '1',
     ZLUX_NODE_LOG_DIR: logDir,
     CONFIG_FILE: configFile,
     ZLUX_NODE_LOG_FILE: logFile,
@@ -116,4 +116,20 @@ export function stopZluxAppServers(instances: ZluxInstance[]): void {
       stopZluxAppServer(instance);
     }
   });
+}
+
+const RECOVERY_TIME_IN_MINUTES = 2;
+const RECOVERY_TIME_IN_MS = 60 * 1000 * RECOVERY_TIME_IN_MINUTES;
+
+const STARTUP_TIME_IN_MINUTES = 2;
+const STARTUP_TIME_IN_MS = 60 * 1000 * RECOVERY_TIME_IN_MINUTES;
+
+export async function waitForRecovery(): Promise<void> {
+  console.log(`waiting for ${RECOVERY_TIME_IN_MINUTES} minutes`);
+  await sleep(RECOVERY_TIME_IN_MS);
+}
+
+export async function waitForStartup(): Promise<void> {
+  console.log(`waiting for ${STARTUP_TIME_IN_MINUTES} minutes`);
+  await sleep(STARTUP_TIME_IN_MS);
 }
