@@ -13,7 +13,7 @@ import {
 } from './zlux-utils';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const SWITCH_OVER_COUNT = 3;
+const SWITCH_OVER_COUNT = 10;
 
 describe('Leader Election Without API Gateway', function () {
   this.timeout(0);
@@ -26,8 +26,8 @@ describe('Leader Election Without API Gateway', function () {
   let previousLeader: ZluxInstance;
 
   before('should start all instances', async function () {
-    setRecoveryTime(12);
-    setStartupTime(12);
+    setRecoveryTime(15);
+    setStartupTime(15);
     instances = createInstances();
     await waitForStartup();
   });

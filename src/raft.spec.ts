@@ -15,7 +15,7 @@ import {
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const SWITCH_OVER_COUNT = 3;
+const SWITCH_OVER_COUNT = 10;
 
 describe('Leader Election', function () {
   this.timeout(0);
@@ -29,8 +29,8 @@ describe('Leader Election', function () {
   let previousLeader: ZluxInstance;
 
   before('should start all instances', async function () {
-    setRecoveryTime(2 * 60);
-    setStartupTime(2 * 60);
+    setRecoveryTime(1 * 20);
+    setStartupTime(1 * 20);
     instances = createInstances();
     await waitForStartup();
   });
