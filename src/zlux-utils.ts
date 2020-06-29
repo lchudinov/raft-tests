@@ -1,6 +1,7 @@
 import * as child_process from 'child_process';
 import path from 'path';
 import * as fs from 'fs';
+import request from 'supertest';
 
 export interface ZluxLaunchParams {
   index: number;
@@ -12,6 +13,7 @@ export interface ZluxInstance {
   launchParams: ZluxLaunchParams,
   leaderOfTerm?: number;
   killed?: boolean;
+  agent: request.SuperTest<request.Test>;
 }
 
 export function runZluxAppServer(params: ZluxLaunchParams): ZluxInstance {
@@ -48,9 +50,13 @@ export function runZluxAppServer(params: ZluxLaunchParams): ZluxInstance {
   const args = ['--harmony', 'zluxCluster.js', `--config=${configFile}`];
   //console.log(`args ${args.join(' ')}`);
   const child = child_process.spawn('node.exe', args, options);
+  const config = JSON.parse(fs.readFileSync(configFile).toString());
+  const httpsPort = config.node.https.port;
+  const agent = request(`https://localhost:${httpsPort}`);
   const instance: ZluxInstance = {
     process: child,
     launchParams: params,
+    agent,
   };
   child.stdout!.on('data', (data) => {
     const line: string = data.toString();
@@ -118,18 +124,32 @@ export function stopZluxAppServers(instances: ZluxInstance[]): void {
   });
 }
 
-const RECOVERY_TIME_IN_MINUTES = 2;
-const RECOVERY_TIME_IN_MS = 60 * 1000 * RECOVERY_TIME_IN_MINUTES;
 
-const STARTUP_TIME_IN_MINUTES = 2;
-const STARTUP_TIME_IN_MS = 60 * 1000 * RECOVERY_TIME_IN_MINUTES;
+let RECOVERY_TIME_IN_SECONDS = 2 * 60;
+let RECOVERY_TIME_IN_MS = 1000 * RECOVERY_TIME_IN_SECONDS;
+
+let STARTUP_TIME_IN_SECONDS = 2 * 60;
+let STARTUP_TIME_IN_MS = 1000 * STARTUP_TIME_IN_SECONDS;
+
+export function setStartupTime(seconds: number) {
+  console.log(`setStartupTime ${seconds}`);
+  STARTUP_TIME_IN_SECONDS = seconds;
+  STARTUP_TIME_IN_MS = 1000 * STARTUP_TIME_IN_SECONDS;
+}
+
+export function setRecoveryTime(seconds: number) {
+  console.log(`setRecoveryTime ${seconds}`);
+  RECOVERY_TIME_IN_SECONDS = seconds;
+  RECOVERY_TIME_IN_MS = 1000 * RECOVERY_TIME_IN_SECONDS;
+}
+
 
 export async function waitForRecovery(): Promise<void> {
-  console.log(`waiting for ${RECOVERY_TIME_IN_MINUTES} minutes`);
+  console.log(`waiting for ${RECOVERY_TIME_IN_SECONDS} seconds`);
   await sleep(RECOVERY_TIME_IN_MS);
 }
 
 export async function waitForStartup(): Promise<void> {
-  console.log(`waiting for ${STARTUP_TIME_IN_MINUTES} minutes`);
+  console.log(`waiting for ${STARTUP_TIME_IN_SECONDS} seconds`);
   await sleep(STARTUP_TIME_IN_MS);
 }
