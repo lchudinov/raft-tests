@@ -13,7 +13,7 @@ import {
 } from './zlux-utils';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const SWITCH_OVER_COUNT = 10;
+const SWITCH_OVER_COUNT = 20;
 
 describe('Leader Election Without API Gateway', function () {
   this.timeout(0);
@@ -26,8 +26,8 @@ describe('Leader Election Without API Gateway', function () {
   let previousLeader: ZluxInstance;
 
   before('should start all instances', async function () {
-    setRecoveryTime(15);
-    setStartupTime(15);
+    setRecoveryTime(12);
+    setStartupTime(12);
     instances = createInstances();
     await waitForStartup();
   });
@@ -82,7 +82,7 @@ describe('Leader Election Without API Gateway', function () {
     it('should find a new leader', async () => {
       const leaderFound = findLeader(instances);
       expect(leaderFound, 'new leader must be elected').to.be.instanceOf(Object);
-      expect(leaderFound?.leaderOfTerm).greaterThan(previousLeader?.leaderOfTerm!);
+      expect(leaderFound?.leaderOfTerm, 'each term must have no more than one leader').greaterThan(previousLeader?.leaderOfTerm!);
       leader = leaderFound!;
     });
 
