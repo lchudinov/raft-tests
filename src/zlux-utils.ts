@@ -2,6 +2,7 @@ import * as child_process from 'child_process';
 import path from 'path';
 import * as fs from 'fs';
 import request from 'supertest';
+import { EventEmitter } from 'events';
 
 export interface ZluxLaunchParams {
   index: number;
@@ -13,6 +14,7 @@ export interface ZluxInstance {
   launchParams: ZluxLaunchParams,
   leaderOfTerm?: number;
   killed?: boolean;
+  readyEmitter: EventEmitter;
   agent: request.SuperTest<request.Test>;
 }
 
@@ -57,6 +59,7 @@ export function runZluxAppServer(params: ZluxLaunchParams): ZluxInstance {
     process: child,
     launchParams: params,
     agent,
+    readyEmitter: new EventEmitter(),
   };
   child.stdout!.on('data', (data) => {
     const line: string = data.toString();
@@ -66,6 +69,12 @@ export function runZluxAppServer(params: ZluxLaunchParams): ZluxInstance {
       const term = parseInt(rest, 10);
       console.log(`${instance.launchParams.index} is leader of term ${term}`);
       instance.leaderOfTerm = term;
+    }
+    if (line.indexOf('IMPORTANT') !== -1) {
+      console.log(`${instance.launchParams.index}: ${line.replace('\n', '').replace('\r', '')}`);
+    }
+    if (line.indexOf('ZWED0031I - Server is ready at') !== -1) {
+      instance.readyEmitter.emit('ready');
     }
     log.write(data);
   });
@@ -149,6 +158,9 @@ export async function waitForRecovery(): Promise<void> {
   await sleep(RECOVERY_TIME_IN_MS);
 }
 
+export async function waitForInstanceStartup(instance: ZluxInstance): Promise<void> {
+  return new Promise((resolve, _reject) => instance.readyEmitter.once('ready', () => resolve()));
+}
 export async function waitForStartup(): Promise<void> {
   console.log(`waiting for ${STARTUP_TIME_IN_SECONDS} seconds`);
   await sleep(STARTUP_TIME_IN_MS);

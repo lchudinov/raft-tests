@@ -7,6 +7,7 @@ import {
   setStartupTime,
   stopZluxAppServer,
   stopZluxAppServers,
+  waitForInstanceStartup,
   waitForRecovery,
   waitForStartup,
   ZluxInstance
@@ -26,9 +27,10 @@ describe('Leader Election Without API Gateway', function () {
   let previousLeader: ZluxInstance;
 
   before('should start all instances', async function () {
-    setRecoveryTime(12);
-    setStartupTime(12);
+    setRecoveryTime(18);
+    setStartupTime(18);
     instances = createInstances();
+    await Promise.all(instances.map(instance => waitForInstanceStartup(instance)));
     await waitForStartup();
   });
 
@@ -106,6 +108,7 @@ describe('Leader Election Without API Gateway', function () {
       const params = previousLeader.launchParams;
       const newInstance = runZluxAppServer(params);
       instances[instances.indexOf(previousLeader)] = newInstance;
+      await waitForInstanceStartup(newInstance);
     });
   }
 
