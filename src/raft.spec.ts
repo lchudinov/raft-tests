@@ -17,6 +17,7 @@ import {
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const SWITCH_OVER_COUNT = 20;
+const MAX_ELECTION_DURATION_IN_TERMS = 4;
 
 describe('Leader Election', function () {
   this.timeout(0);
@@ -88,6 +89,7 @@ describe('Leader Election', function () {
       const leaderFound = findLeader(instances);
       expect(leaderFound, 'new leader must be elected').to.be.instanceOf(Object);
       expect(leaderFound?.leaderOfTerm).greaterThan(previousLeader?.leaderOfTerm!);
+      expect(leaderFound?.leaderOfTerm! - previousLeader?.leaderOfTerm!, 'leader re-election must not last too many terms').lessThan(MAX_ELECTION_DURATION_IN_TERMS + 1);
       leader = leaderFound!;
     });
 
