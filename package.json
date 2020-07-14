@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "ts-node src/index.ts",
-    "test": "ts-mocha src/**/*.spec.ts"
+    "test": "ts-mocha src/**/*.spec.ts",
+    "test:no-cluster": "env ZLUX_NO_CLUSTER=1 ts-mocha src/**/*.spec.ts"
   },
   "keywords": [],
   "author": "",

@@ -33,6 +33,9 @@ export function runZluxAppServer(params: ZluxLaunchParams): ZluxInstance {
     ZOWE_INSTANCE: 'my-instance',
     ZOWE_SESSION_SECRET: 'my-secret',
     ZLUX_RAFT_CLUSTER_ENABLED: 'TRUE',
+    // ZLUX_RAFT_MIN_ELECTION_TIMEOUT: '3000',
+    // ZLUX_RAFT_MAX_ELECTION_TIMEOUT: '4000',
+    // ZLUX_RAFT_HEARTBEAT_INTERVAL: '500',
     INSTANCE_DIR: params.instanceDir,
     ZLUX_MIN_WORKERS: '1',
     ZLUX_MAX_WORKERS: '1',
@@ -49,7 +52,11 @@ export function runZluxAppServer(params: ZluxLaunchParams): ZluxInstance {
   };
   let log = fs.createWriteStream(logFile);
   //console.log(`options are ${JSON.stringify(options, null, 2)}`);
-  const args = ['--harmony', 'zluxCluster.js', `--config=${configFile}`];
+  let mainFile = 'zluxCluster.js';
+  if (process.env.ZLUX_NO_CLUSTER) {
+    mainFile = 'zluxServer.js';
+  }
+  const args = ['--harmony', mainFile, `--config=${configFile}`];
   //console.log(`args ${args.join(' ')}`);
   const child = child_process.spawn('node.exe', args, options);
   const config = JSON.parse(fs.readFileSync(configFile).toString());
