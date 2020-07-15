@@ -31,8 +31,8 @@ describe('Leader Election', function () {
   let previousLeader: ZluxInstance;
 
   before('should start all instances', async function () {
-    setRecoveryTime(1 * 18);
-    setStartupTime(1 * 18);
+    setRecoveryTime(18);
+    setStartupTime(18);
     instances = createInstances();
     await Promise.all(instances.map(instance => waitForInstanceStartup(instance)));
     await waitForStartup();
@@ -100,7 +100,7 @@ describe('Leader Election', function () {
       expect(res.status, JSON.stringify(res.body)).to.equal(200);
     });
 
-    it('should get correct value from cluster storage again', async () => {
+    it('should get correct value from cluster storage again', async function () {
       const res = await req
         .get(`/ui/v1/zlux/ZLUX/plugins/org.zowe.zlux.sample.angular/services/hello/_current/${key}`)
         .set('Cookie', cookie)
